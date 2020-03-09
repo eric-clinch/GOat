@@ -1,10 +1,12 @@
 import subprocess
 import time
 import sys
-from Board import Board
+from pyMCTS.Board import Board
+from pyMCTS.MCTS import MCTS
+from pyMCTS.NaiveEvaluator import NaiveEvaluator
 
-SECONDS_PER_MOVE = 5
-THREADS = 12
+SECONDS_PER_MOVE = 30
+THREADS = 4
 BOARD_SIZE = 9
 
 #taken from http://www.cs.cmu.edu/~112/notes/notes-graphics.html
@@ -60,7 +62,8 @@ def makePassMove(data):
 
 def timerFired(data):
     if data.board.current_player not in data.userPlayers:
-        mcts_move = data.board.GetMCTSMove(THREADS, SECONDS_PER_MOVE)
+        # mcts_move = data.board.GetMCTSMove(THREADS, SECONDS_PER_MOVE)
+        mcts_move = MCTS(data.board, NaiveEvaluator, SECONDS_PER_MOVE)
         data.board.MakeMove(mcts_move.row, mcts_move.col)
         data.placedRow = mcts_move.row
         data.placedCol = mcts_move.col

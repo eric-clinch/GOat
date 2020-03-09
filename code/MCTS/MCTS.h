@@ -24,6 +24,9 @@ class MCTS : public Strategy {
 
   double getConfidence() const;
 
+  static int playout(Board *board, Player playerID, Player enemyID,
+                     double playoutPercent);
+
  private:
   // perform one iteration of the MCTS algorithm starting from the given node
   static void *getMoveHelper(void *arg);
@@ -34,8 +37,6 @@ class MCTS : public Strategy {
   // static void *MCTSIterationWorker(void *args);
   float performPlayouts(Board &board, Player playerID, Player enemyID,
                         workerArg *groupInfo);
-  static int playout(Board *board, Player playerID, Player enemyID,
-                     double playoutPercent);
   static void *playoutWorker(void *arg);
   static const Move sampleMove(std::vector<Move> &moves);
 

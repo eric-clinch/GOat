@@ -21,6 +21,7 @@ class Board {
  public:
   Board();
   Board(int width, int height);
+  Board(const Board &board);
   ~Board();
   bool operator==(const Board &other) const;
 

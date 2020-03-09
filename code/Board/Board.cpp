@@ -66,6 +66,23 @@ void Board::seenZeroFill() const {
   for (int i = 0; i < width * height; i++) seenGrid[i] = false;
 }
 
+Board::Board(const Board &orig) : Board(orig.width, orig.height) {
+  for (int i = 0; i < height; i++) {
+    std::memcpy(&board[i][0], &orig.board[i][0], width * sizeof(char));
+  }
+
+  P0Stones = orig.P0Stones;
+  P1Stones = orig.P1Stones;
+  P0Captures = orig.P0Captures;
+  P1Captures = orig.P1Captures;
+  prevCaptured = orig.prevCaptured;
+
+  lastMovePassed = orig.lastMovePassed;
+  gameOver = orig.gameOver;
+
+  assert(isValid());
+}
+
 Board Board::getCopy() const {
   mutex board_lock;
   board_lock.lock();

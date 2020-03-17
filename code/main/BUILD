@@ -8,8 +8,8 @@ cc_binary(
 
 cc_binary(
     name = "libboard.so",
-    srcs = ["PythonInterface.cpp",],
-    deps = ["//Board:Board", "//Game:Game", "//MCTS:MCTS",],
+    srcs = ["BoardPyInterface.cpp",],
+    deps = ["//Board:Board", "//Game:Game", "//MCTS:MCTS"],
     linkopts = ["-pthreads"],
     linkshared=True
 )

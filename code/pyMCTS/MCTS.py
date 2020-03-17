@@ -1,17 +1,20 @@
 
 import math
 import time
-from Board import MCTSMove
+from pyMCTS.Board import MCTSMove, Policy
 
 class MoveInfo():
-  def __init__(self, move, board_prior):
+  def __init__(self, move, board_prior, pass_prior):
     self.move = move
     self.node = None
     if move.row < 0:
       assert(move.col < 0)
-      self.prior = 0
+      self.prior = pass_prior
     else:
       self.prior = board_prior[move.row][move.col]
+
+class Struct():
+  pass
 
 class TreeNode():
   def __init__(self, board, evaluator):
@@ -19,16 +22,46 @@ class TreeNode():
       self.winner = board.GetWinner()
       value = 1 if self.winner == board.current_player else 0
     else:
+      if board.GameEffectivelyOver() or board.PassWins():
+        pass_move = Struct()
+        pass_move.row, pass_move.col = -1, -1
+        moves = [pass_move]
+      else:
+        moves = board.GetLegalMoves()
+
       self.winner = None
-      moves = board.GetLegalMoves()
       assert(len(moves) > 0)
-      value, board_prior = evaluator(board)
-      self.children = [MoveInfo(move, board_prior) 
+      value, board_prior, pass_prior = evaluator(board)
+      self.children = [MoveInfo(move, board_prior, pass_prior) 
                        for move in moves]
       self.NormalizeChildrenPriors()
 
     self.visits = 1
     self.value_sum = value
+
+  def VisitPolicy(self, board_size):
+    num_elems = board_size * board_size + 1
+    distribution = [0] * num_elems
+    visit_sum = 0
+    for child in self.children:
+      move = child.move
+      idx = board_size * move.row + move.col
+      if move.row < 0:
+        assert(move.col < 0)
+        # This is the pass move
+        idx = num_elems - 1
+      visits = child.node.visits if child.node is not None else 0
+      distribution[idx] = visits
+      visit_sum += visits
+
+    # Normalize the distribution
+    for i in range(num_elems):
+      distribution[i] = distribution[i] / visit_sum
+    policy = Struct()
+    policy.length = len(distribution)
+    policy.distribution = distribution
+    return policy
+    
 
   def NormalizeChildrenPriors(self):
     prior_sum = 0
@@ -41,7 +74,8 @@ class TreeNode():
     if self.winner is not None:
       value = 1 if self.winner == board.current_player else 0
     else:
-      choice_idx = self.UCB1()
+      choice_idx = self.PUCT()
+      # choice_idx = self.UCB1()
       choice_child = self.children[choice_idx]
       choice_move = choice_child.move
       board.MakeMove(choice_move.row, choice_move.col)
@@ -70,12 +104,24 @@ class TreeNode():
     return self.value_sum / self.visits
 
   def UCB1(self):
-    best_score = None
+    # If there are unvisited children, pick the child with the highest prior
+    best_prior = None
     best_index = None
+    for i in range(len(self.children)):
+      child = self.children[i]
+      if child.node is not None:
+        continue 
+      if best_prior is None or child.prior > best_prior:
+        best_index = i
+        best_prior = child.prior
+
+    if best_index is not None:
+      return best_index
+
+    # All the children have been visited at least once, so pick the one with the highest UCB1 score
+    best_score = None
     for i in range(len(self.children)):    
       child = self.children[i]
-      if child.node is None:
-        return i
       child_score = 1 - child.node.ExpectedValue()
       child_score += math.sqrt(2 * math.log(self.visits) / child.node.visits)
       if best_score is None or child_score > best_score:
@@ -83,13 +129,33 @@ class TreeNode():
         best_index = i
     return best_index
 
+  def PUCT(self):
+    best_score = None
+    best_index = None
+    for i in range(len(self.children)):    
+      child = self.children[i]
+      if child.node is None:
+        child_score = 1
+        child_visits = 0
+      else:
+        child_score = 1 - child.node.ExpectedValue()
+        child_visits = child.node.visits
+
+      exploration_weight = math.sqrt(2)
+      child_score += exploration_weight * child.prior * math.sqrt(math.log(self.visits) / (1 + child_visits))
+      if best_score is None or child_score > best_score:
+        best_score = child_score
+        best_index = i
+    return best_index
+   
+
   # Returns the move and the expected value associated with the most visited
   # child
   def BestChild(self):
     most_visits = 0
     best_child = None
     for child in self.children:
-      if child.node.visits > most_visits:
+      if child.node is not None and child.node.visits > most_visits:
         most_visits = child.node.visits
         best_child = child
     return best_child.move, 1 - best_child.node.ExpectedValue()
@@ -97,15 +163,18 @@ class TreeNode():
 def MCTS(board, evaluator, seconds_to_run):
   start_time = time.time()
   root_node = TreeNode(board, evaluator)
+  count = 0
   while time.time() - start_time < seconds_to_run:
     root_node.MCTSIter(board.Copy(), evaluator)
+    count += 1
   move, confidence = root_node.BestChild()
 
-  # root_node.PrintTree(0, 3)
+  print("%d MCTS iterations performed" % count)
 
-  result = MCTSMove()
+  result = Struct()
   result.row = move.row
   result.col = move.col
   result.confidence = confidence
+  result.policy = root_node.VisitPolicy(len(board))
 
   return result

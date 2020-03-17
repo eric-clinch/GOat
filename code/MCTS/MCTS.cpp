@@ -57,14 +57,10 @@ const Move MCTS::getMove(const Board &board, Player playerID, Player enemyID) {
     pthread_join(iterationWorkers[i], NULL);
   }
 
-  std::cout << toString() << " iterations: " << args.iterations
-            << " playouts: " << args.iterations * playoutThreads << std::endl;
-
   confidence = root.getConfidence();
-  std::cout << "confidence: " << confidence << std::endl;
-  if (confidence < 0.01) {
-    // if it is estimated that there is a < 10% chance of winning, concede
-    std::cout << "conceding" << std::endl;
+  visit_distribution = root.getVisitDistribution(board.getWidth());
+  if (confidence < 0.05) {
+    // if it is estimated that there is a < 5% chance of winning, concede
     return Move();
   } else {
     return root.getMostVisited();
@@ -210,7 +206,7 @@ int MCTS::playout(Board *originalBoard, Player playerID, Player enemyID,
   size_t maxIters =
       static_cast<int>(playoutPercent * (board.getWidth() * board.getHeight()));
   std::vector<Move> moves;
-  while (!board.gameIsOver() && iters < maxIters) {
+  while (!board.gameEffectivelyOver() && iters < maxIters) {
     iters++;
 
     board.getContestedTerritoryMoves(moves);
@@ -228,3 +224,6 @@ int MCTS::playout(Board *originalBoard, Player playerID, Player enemyID,
 }
 
 double MCTS::getConfidence() const { return confidence; }
+std::vector<float> MCTS::getVisitDistribution() const {
+  return visit_distribution;
+}

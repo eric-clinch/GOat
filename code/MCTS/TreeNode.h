@@ -25,6 +25,13 @@ class TreeNode {
 
   const Move getMostVisited() const;
   float getConfidence() const;
+
+  // Returns a flat probability distribution vector with an entry for each
+  // possible move in a Go game of the given board size (includes both legal and
+  // illegal moves). The size of the vector is then board_size * board_size + 1
+  // (including the pass move)
+  std::vector<float> getVisitDistribution(int board_size) const;
+
   bool isLeaf() const;
 
   size_t getNumMoves() const;

@@ -34,7 +34,11 @@ class Board {
   void seenZeroFill() const;
 
   bool gameIsOver() const;
-  unsigned int playerScore(Player playerID);
+  bool gameEffectivelyOver() const;
+  bool passWins(Player playerID)
+      const;  // Returns whether passing would result in a win for the player
+
+  unsigned int playerScore(Player playerID) const;
   Player getWinner();
 
   int getWidth() const;
@@ -65,10 +69,10 @@ class Board {
 
  private:
   unsigned int stoneCount(char stone) const;
-  std::pair<unsigned int, unsigned int> getTerritories();
-  std::pair<Player, unsigned int> floodFillTerritories(int row, int col);
+  std::pair<unsigned int, unsigned int> getTerritories() const;
+  std::pair<Player, unsigned int> floodFillTerritories(int row, int col) const;
   std::pair<Player, bool> floodFillTerritories(
-      int row, int col, std::vector<std::pair<int, int>> &cells);
+      int row, int col, std::vector<std::pair<int, int>> &cells) const;
 
   bool isValid() const;
 

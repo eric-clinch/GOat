@@ -4,9 +4,10 @@ import sys
 from pyMCTS.Board import Board
 from pyMCTS.MCTS import MCTS
 from pyMCTS.NaiveEvaluator import NaiveEvaluator
+from pyMCTS.NNEvaluator import NNEvaluatorFactory
 
-SECONDS_PER_MOVE = 30
-THREADS = 4
+SECONDS_PER_MOVE = 5
+THREADS = -1 # Use all available threads
 BOARD_SIZE = 9
 
 #taken from http://www.cs.cmu.edu/~112/notes/notes-graphics.html
@@ -37,10 +38,21 @@ def init(data):
     data.placedRow = None
     data.placedCol = None
 
+    data.evaluator = NNEvaluatorFactory("trained_models/naive_mcts_model", BOARD_SIZE)
+
     data.passButton = Button(data.root, text="Pass", relief=GROOVE, command=lambda: makePassMove(data))
     data.passButtonWidth = 40
 
+    data.modelEvaluateButton = Button(data.root, text="AI Evaluate", relief=GROOVE,
+                                      command=lambda: EvaluateBoard(data))
+    data.evaluatorButtonWidth = 80
+    data.evaluator_value = None
+    data.evaluator_policy = None
+
+
 def mousePressed(event, data):
+    if data.gameOver:
+        return
     if data.board.current_player not in data.userPlayers:
         return
     row = int((event.y - data.margin) // data.cellHeight)
@@ -51,23 +63,34 @@ def mousePressed(event, data):
             data.placedCol = col
             data.board.MakeMove(row, col)
 
+            data.evaluator_value, data.evaluator_policy = None, None
+            data.gameOver = data.board.IsGameOver()
+
 def keyPressed(event, data):
     # use event.char and event.keysym
     pass
 
 def makePassMove(data):
-    if data.waitingOnMove and not data.gameOver:
+    if not data.gameOver:
         data.board.MakeMove(-1, -1)
-        data.waitingOnMove = False
+
+def EvaluateBoard(data):
+    data.evaluator_value, data.evaluator_policy, _ = data.evaluator(data.board)
 
 def timerFired(data):
+    if data.gameOver:
+        return
     if data.board.current_player not in data.userPlayers:
         # mcts_move = data.board.GetMCTSMove(THREADS, SECONDS_PER_MOVE)
-        mcts_move = MCTS(data.board, NaiveEvaluator, SECONDS_PER_MOVE)
+        mcts_move = MCTS(data.board, data.evaluator, SECONDS_PER_MOVE)
         data.board.MakeMove(mcts_move.row, mcts_move.col)
         data.placedRow = mcts_move.row
         data.placedCol = mcts_move.col
         data.confidence = mcts_move.confidence
+
+        data.evaluator_value, data.evaluator_policy = None, None
+        data.gameOver = data.board.IsGameOver()
+
 
 def redrawAll(canvas, data):
     canvas.create_rectangle(0, 0, data.width, data.height,
@@ -98,6 +121,17 @@ def redrawAll(canvas, data):
                 canvas.create_oval(left + data.circleMargin, 
                     top + data.circleMargin, right - data.circleMargin, 
                     bot - data.circleMargin, fill=color, outline=outline, width=width)
+
+            if data.evaluator_policy is not None:
+                prior = data.evaluator_policy[row][col]
+                color = 'red'
+                radius = (data.cellWidth - 2 * data.circleMargin) * prior
+                x_center = (left + right) / 2
+                y_center = (top + bot) / 2
+                canvas.create_oval(x_center - radius, 
+                    y_center - radius, x_center + radius, 
+                    y_center + radius, fill=color, width=0)
+
         top = bot
         bot += data.cellHeight
 
@@ -109,11 +143,13 @@ def redrawAll(canvas, data):
                        text = "White score: %d" % data.board.GetPlayerScore(1), anchor=SW)
     canvas.create_text(data.width / 2, data.height - (data.margin + data.botMargin) / 3, 
                        text = "B score: %d" % data.board.GetPlayerScore(0), anchor=SW)
-    canvas.create_window(data.width - data.margin, data.margin / 2,
+    canvas.create_window(data.width - data.margin, data.margin / 5,
                 width = data.passButtonWidth, window = data.passButton, anchor=NE)
+    canvas.create_window(data.width - data.margin, 4 * data.margin / 5,
+                width = data.evaluatorButtonWidth, window = data.modelEvaluateButton, anchor=NE)
 
     if data.gameOver:
-        message = "YOU WON" if data.userWon else "YOU LOST"
+        message = "GAME OVER"
         canvas.create_text(data.width / 2, data.margin / 2, text=message)
     elif data.board.current_player in data.userPlayers:
         canvas.create_text(data.width / 2, data.margin / 3, text="Your Turn")

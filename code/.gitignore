@@ -15,3 +15,7 @@ bazel-code
 # Python
 __pycache__/
 *.pyc
+
+data/*
+trained_models/*
+

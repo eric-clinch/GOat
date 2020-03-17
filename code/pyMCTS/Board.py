@@ -43,9 +43,20 @@ def LoadLib():
     LIB.RandomPlayout.argtypes = [ctypes.c_void_p, ctypes.c_int]
     LIB.RandomPlayout.restype = ctypes.c_int
 
+    LIB.GameEffectivelyOver.argtypes = [ctypes.c_void_p]
+    LIB.GameEffectivelyOver.restype = ctypes.c_bool;
+
+    LIB.PassWins.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    LIB.PassWins.restype = ctypes.c_bool
+
+
+class Policy(ctypes.Structure):
+    _fields_ = [('length', ctypes.c_int),
+                ('distribution', ctypes.POINTER(ctypes.c_float))]
+
 class MCTSMove(ctypes.Structure):
     _fields_ = [('row', ctypes.c_int), ('col', ctypes.c_int),
-                ('confidence', ctypes.c_double)]
+                ('confidence', ctypes.c_double), ('policy', Policy)]
 
 class Stone(ctypes.Structure):
     _fields_ = [('row', ctypes.c_int), ('col', ctypes.c_int),
@@ -74,13 +85,6 @@ class Board():
             self.current_player = 0
             self.size = board_size
 
-    def Copy(self):
-        copy = Board(-1)
-        copy.c_board = LIB.Copy(self.c_board)
-        copy.current_player = self.current_player
-        copy.size = self.size
-        return copy
-
     def __len__(self):
         return LIB.BoardSize(self.c_board)
 
@@ -90,6 +94,13 @@ class Board():
         for row in board_list:
             result += str(row) + '\n'
         return result
+
+    def Copy(self):
+        copy = Board(-1)
+        copy.c_board = LIB.Copy(self.c_board)
+        copy.current_player = self.current_player
+        copy.size = self.size
+        return copy
 
     def LegalMove(self, row, col):
         return LIB.LegalMove(self.c_board, row, col)
@@ -125,6 +136,12 @@ class Board():
 
     def RandomPlayout(self):
         return LIB.RandomPlayout(self.c_board, self.current_player)
+
+    def GameEffectivelyOver(self):
+        return LIB.GameEffectivelyOver(self.c_board)
+
+    def PassWins(self):
+        return LIB.PassWins(self.c_board, self.current_player)
 
 
 if __name__ == "__main__":

@@ -60,6 +60,7 @@ class TreeNode():
     policy = Struct()
     policy.length = len(distribution)
     policy.distribution = distribution
+    return policy
     
 
   def NormalizeChildrenPriors(self):

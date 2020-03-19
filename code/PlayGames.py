@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 from pyMCTS.MCTS import MCTS
 from pyMCTS.Board import Board
 from pyMCTS.NaiveEvaluator import NaiveEvaluator
@@ -81,6 +79,10 @@ if __name__ == "__main__":
     playouts = []
     if args.append:
         playouts = LoadObject(args.output_file)
+
+    if args.output_file is None:
+        print("output file required")
+        exit()
 
     for i in range(args.games):
         if args.model is None:

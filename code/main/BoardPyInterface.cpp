@@ -1,3 +1,4 @@
+#include <thread>
 #include "Board/Board.h"
 #include "Board/Move.h"
 #include "Game/Game.h"
@@ -25,10 +26,16 @@ typedef struct StoneList {
   stone_t *stones;
 } stone_list_t;
 
+typedef struct Policy {
+  int length;
+  float *distribution;
+} policy_t;
+
 typedef struct MCTSMove {
   int row;
   int col;
   double confidence;
+  policy_t policy;
 } mcts_move_t;
 
 extern "C" {
@@ -82,19 +89,6 @@ int PlayerScore(Board *board, int player_i) {
   return board->playerScore(player);
 }
 
-mcts_move_t GetMCTSMove(Board *board, int threads, int msPerMove,
-                        int player_i) {
-  MCTS mcts(msPerMove, 1, threads, 0.2, 0.75);
-  Player player = player_i == 0 ? Player::P0 : Player::P1;
-  Player opponent = player == Player::P0 ? Player::P1 : Player::P0;
-  Move move = mcts.getMove(*board, player, opponent);
-  mcts_move_t result;
-  result.row = move.row;
-  result.col = move.col;
-  result.confidence = mcts.getConfidence();
-  return result;
-}
-
 location_list_t LegalMoves(Board *board) {
   std::vector<Move> moves = board->getMoves();
   location_list_t result;
@@ -115,9 +109,42 @@ int GetWinner(Board *board) {
   return winner;
 }
 
+mcts_move_t GetMCTSMove(Board *board, int threads, int msPerMove,
+                        int player_i) {
+  if (threads <= 0) {
+    threads = std::thread::hardware_concurrency();
+  }
+  MCTS mcts(msPerMove, 1, threads, 0.2, 0.75);
+  Player player = player_i == 0 ? Player::P0 : Player::P1;
+  Player opponent = player == Player::P0 ? Player::P1 : Player::P0;
+  Move move = mcts.getMove(*board, player, opponent);
+  mcts_move_t result;
+  result.row = move.row;
+  result.col = move.col;
+  result.confidence = mcts.getConfidence();
+
+  std::vector<float> visit_distribution = mcts.getVisitDistribution();
+  policy_t policy;
+  policy.length = visit_distribution.size();
+  policy.distribution = new float[policy.length];
+  for (int i = 0; i < policy.length; i++) {
+    policy.distribution[i] = visit_distribution[i];
+  }
+  result.policy = policy;
+
+  return result;
+}
+
 int RandomPlayout(Board *board, int player_i) {
   Player player = player_i == 0 ? Player::P0 : Player::P1;
   Player enemy = player == Player::P1 ? Player::P0 : Player::P1;
   return MCTS::playout(board, player, enemy, 0.25);
+}
+
+bool GameEffectivelyOver(Board *board) { return board->gameEffectivelyOver(); }
+
+bool PassWins(Board *board, int player_i) {
+  Player player = player_i == 0 ? Player::P0 : Player::P1;
+  return board->passWins(player);
 }
 }

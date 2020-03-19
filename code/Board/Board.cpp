@@ -129,6 +129,23 @@ bool Board::gameIsOver() const {
          (P1Stones == (unsigned int)(width * height));
 }
 
+bool Board::gameEffectivelyOver() const {
+  if (gameOver) {
+    return true;
+  }
+  if (P0Stones > 1 && P1Stones > 1 &&
+      (playerScore(Player::P0) + playerScore(Player::P1) == width * height)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool Board::passWins(Player playerID) const {
+  Player opponent = playerID == Player::P0 ? Player::P1 : Player::P0;
+  return lastMovePassed && playerScore(playerID) > playerScore(opponent);
+}
+
 int Board::getWidth() const { return width; }
 
 int Board::getHeight() const { return height; }
@@ -269,10 +286,10 @@ std::vector<std::pair<Move, float>> Board::getMovesAndWeights() const {
 
     if (move.row >= 2 && move.col >= 2 && width - move.col > 2 &&
         height - move.row > 2) {
-      weight += 1.;
+      weight += .2;
       if (move.row == 2 || move.col == 2 || width - move.col == 3 ||
           height - move.row == 3) {
-        weight += 1.;
+        weight += .2;
       }
     }
 
@@ -281,7 +298,7 @@ std::vector<std::pair<Move, float>> Board::getMovesAndWeights() const {
     } else {
       int neighbors = neighborCount(move.row, move.col);
       if (1 <= neighbors && neighbors < 4) {
-        weight += 1;
+        weight += 1.;
       }
     }
 
@@ -434,13 +451,13 @@ int Board::removeStones(int row, int col, char stone) {
 }
 
 // scored by Chinese rules (area scoring)
-unsigned int Board::playerScore(Player playerID) {
+unsigned int Board::playerScore(Player playerID) const {
   unsigned int score;
   std::pair<unsigned int, unsigned int> territories = getTerritories();
   if (playerID == P0) {
-    score = territories.first + P0Captures + P0Stones;
+    score = territories.first + P0Stones;
   } else {
-    score = territories.second + P1Captures + P1Stones;
+    score = territories.second + P1Stones;
   }
 
   return score;
@@ -462,7 +479,7 @@ unsigned int Board::stoneCount(char stone) const {
   return count;
 }
 
-std::pair<unsigned int, unsigned int> Board::getTerritories() {
+std::pair<unsigned int, unsigned int> Board::getTerritories() const {
   seenZeroFill();
 
   unsigned int P0Territory = 0;
@@ -493,7 +510,8 @@ std::pair<unsigned int, unsigned int> Board::getTerritories() {
 // that case it returns the pair (P, T) where P is the player that controls the
 // territory and T is the size of the territory. If neither player controls the
 // territory, it simply returns (P0, 0).
-std::pair<Player, unsigned int> Board::floodFillTerritories(int row, int col) {
+std::pair<Player, unsigned int> Board::floodFillTerritories(int row,
+                                                            int col) const {
   std::stack<std::pair<int, int>> cellStack;
   cellStack.push(std::pair<int, int>(row, col));
   seenGrid[row * width + col] = true;
@@ -546,7 +564,7 @@ std::pair<Player, unsigned int> Board::floodFillTerritories(int row, int col) {
 // instead of returning the territory size, returns a bool of whether or
 // not the area is controlled by the given player
 std::pair<Player, bool> Board::floodFillTerritories(
-    int row, int col, std::vector<std::pair<int, int>> &cells) {
+    int row, int col, std::vector<std::pair<int, int>> &cells) const {
   assert(cells.size() == 0);
 
   cells.push_back(std::pair<int, int>(row, col));

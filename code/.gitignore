@@ -15,3 +15,6 @@ bazel-code
 # Python
 __pycache__/
 *.pyc
+
+# Data
+data/*

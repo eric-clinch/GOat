@@ -23,6 +23,7 @@ class MCTS : public Strategy {
   virtual string toString();
 
   double getConfidence() const;
+  std::vector<float> getVisitDistribution() const;
 
   static int playout(Board *board, Player playerID, Player enemyID,
                      double playoutPercent);
@@ -48,6 +49,7 @@ class MCTS : public Strategy {
   double explorationConstant;
   double playoutPercent;
   double confidence;
+  std::vector<float> visit_distribution;
 
   static std::random_device rd;
   static std::mt19937 rng;

@@ -4,9 +4,12 @@
 
 TreeNode::TreeNode(const Board &board, Player playerID, Player enemyID)
     : playerID(playerID), enemyID(enemyID), visits(0) {
-  // std::vector<Move> moves = board.priorityOrderedMoves();
-  std::vector<std::pair<Move, float>> moveAndWeights =
-      board.getMovesAndWeights();
+  std::vector<std::pair<Move, float>> moveAndWeights;
+  if (board.gameEffectivelyOver() || board.passWins(playerID)) {
+    moveAndWeights = {{Move(), 1.}};
+  } else {
+    moveAndWeights = board.getMovesAndWeights();
+  }
 
   for (const std::pair<Move, float> &moveWeight : moveAndWeights) {
     moveUtilities.push_back(
@@ -106,6 +109,28 @@ float TreeNode::getConfidence() const {
   }
 
   return result;
+}
+
+std::vector<float> TreeNode::getVisitDistribution(int board_size) const {
+  int visit_sum = 0;
+  int num_elems = board_size * board_size + 1;
+  std::vector<float> distribution(num_elems, 0.);
+  for (const UtilityNode<Move> &util_node : moveUtilities) {
+    const Move &move = util_node.object;
+    int visits = util_node.numTrials;
+    int index = board_size * move.row + move.col;
+    if (move.isPass()) {
+      index = num_elems - 1;  // The pass move goes at the end
+    }
+    distribution[index] = visits;
+    visit_sum += visits;
+  }
+
+  // Normalize the distribution
+  for (int i = 0; i < distribution.size(); i++) {
+    distribution[i] = distribution[i] / static_cast<float>(visit_sum);
+  }
+  return distribution;
 }
 
 bool TreeNode::isLeaf() const {

@@ -8,7 +8,7 @@ from pyMCTS.MCTS import MCTS
 from pyMCTS.NaiveEvaluator import NaiveEvaluator
 from pyMCTS.NNEvaluator import NNEvaluatorFactory
 
-SECONDS_PER_MOVE = 5
+SECONDS_PER_MOVE = 10
 THREADS = -1 # Use all available threads
 BOARD_SIZE = 9
 
@@ -26,7 +26,7 @@ def init(data):
     data.boardLen = BOARD_SIZE
     data.gameOver = False
     data.userWon = False
-    data.userPlayers = [0]
+    data.userPlayers = []
     data.confidence = None
 
     data.backgroundColor = rgbString(219, 190, 122)
@@ -84,7 +84,6 @@ def EvaluateBoard(data):
 
 def timerFired(data):
     if data.gameOver or data.require_redraw:
-        print("requiring a redraw first")
         return
     if data.board.current_player not in data.userPlayers:
         # mcts_move = data.board.GetMCTSMove(THREADS, SECONDS_PER_MOVE)

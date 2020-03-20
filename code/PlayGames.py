@@ -58,6 +58,15 @@ def LoadObject(file_name):
     file.close()
     return obj
 
+def GeneratePlayouts(board_size, strategy, save_path, num_playouts,
+                     playouts=None):
+    if playouts is None:
+        playouts = []
+    for i in range(num_playouts):
+        playouts.append(GeneratePlayout(board_size, strategy, strategy))
+        WriteObject(save_path, playouts)
+        print(i+1, "games played")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plays Go games to generate training data")
 
@@ -84,10 +93,5 @@ if __name__ == "__main__":
         print("output file required")
         exit()
 
-    for i in range(args.games):
-        if args.model is None:
-            playouts.append(GeneratePlayout(board_size, strategy, strategy))
-        else:
-            playouts.append(GeneratePlayout(board_size, strategy, strategy))
-        WriteObject(args.output_file, playouts)
-        print(i+1, "games played")
+    GeneratePlayouts(board_size, strategy, args.output_file, args.games,
+                     playouts)

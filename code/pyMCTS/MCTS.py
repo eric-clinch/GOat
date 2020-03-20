@@ -2,6 +2,7 @@
 import math
 import time
 from pyMCTS.Board import MCTSMove, Policy
+import numpy as np
 
 class MoveInfo():
   def __init__(self, move, board_prior, pass_prior):
@@ -160,6 +161,21 @@ class TreeNode():
         best_child = child
     return best_child.move, 1 - best_child.node.ExpectedValue()
 
+  # Samples a move. Each move is sampled with probability proportional to
+  # v ** (1 / t), where v is the visit count of that move, and t is the
+  # temperature.
+  def SampleChild(self, temp=1):
+    child_weights = []
+    for child in self.children:
+      if child.node is None:
+        child_weights.append(0)
+      else:
+        child_weights.append(child.node.visits ** (1 / temp))
+    child_weights = np.array(child_weights)
+    child_weights = child_weights / sum(child_weights)
+    sample_child = np.random.choice(self.children, p=child_weights)
+    return sample_child.move, 1 - sample_child.node.ExpectedValue()
+
 def MCTS(board, evaluator, seconds_to_run):
   start_time = time.time()
   root_node = TreeNode(board, evaluator)
@@ -167,13 +183,18 @@ def MCTS(board, evaluator, seconds_to_run):
   while time.time() - start_time < seconds_to_run:
     root_node.MCTSIter(board.Copy(), evaluator)
     count += 1
-  move, confidence = root_node.BestChild()
+  move, confidence = root_node.SampleChild()
 
   print("%d MCTS iterations performed" % count)
 
   result = Struct()
-  result.row = move.row
-  result.col = move.col
+  if confidence < 0.05:
+    # pass
+    result.row = -1
+    result.col = -1
+  else:
+    result.row = move.row
+    result.col = move.col
   result.confidence = confidence
   result.policy = root_node.VisitPolicy(len(board))
 

@@ -83,7 +83,7 @@ def Epoch(nn, data_loader, value_criterion, policy_criterion, optim):
 
     return running_loss / count 
 
-def Train(playouts, net, save_path):
+def Train(playouts, net, save_path, epochs=500):
     batch_size = 1024
     data_loader = GetDataset(playouts, batch_size)
 
@@ -91,7 +91,6 @@ def Train(playouts, net, save_path):
     policy_criterion = CrossEntropy
     optim = optimizer.Adam(net.parameters(), weight_decay=.0001)
 
-    epochs = 1000
     for i in range(epochs):
         start_time = time.time()
         avg_loss = Epoch(net, data_loader, value_criterion, policy_criterion, optim)
@@ -103,8 +102,8 @@ def Train(playouts, net, save_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plays Go games to generate training data")
 
-    parser.add_argument('output_file', type=str, nargs="?", help=f"Where the model is stored")
-    parser.add_argument('data_file', type=str, nargs="?", help=f"The data to train on")
+    parser.add_argument('output_file', type=str, help=f"Where the model is stored")
+    parser.add_argument('data_file', type=str, help=f"The data to train on")
     parser.add_argument('--init_model', type=str, default=None,
                         help="The model that training is initiated with")
     args = parser.parse_args()

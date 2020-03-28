@@ -1,25 +1,28 @@
 #!/usr/bin/python3
 
+from tkinter import *
 import subprocess
 import time
 import sys
 from pyMCTS.Board import Board
 from pyMCTS.MCTS import MCTS
+from pyMCTS.BatchedMCTS import BatchedMCTS
 from pyMCTS.NaiveEvaluator import NaiveEvaluator
-from pyMCTS.NNEvaluator import NNEvaluatorFactory
+from pyMCTS.NNEvaluator import NNEvaluatorFactory, BatchNNEvaluatorFactory
 
 SECONDS_PER_MOVE = 10
-THREADS = -1 # Use all available threads
+THREADS = -1  # Use all available threads
 BOARD_SIZE = 9
 
-#taken from http://www.cs.cmu.edu/~112/notes/notes-graphics.html
+# taken from http://www.cs.cmu.edu/~112/notes/notes-graphics.html
+
+
 def rgbString(red, green, blue):
     return "#%02x%02x%02x" % (red, green, blue)
 
 # animation framework taken from the 15-112 course website
 # https://www.cs.cmu.edu/~112/notes/notes-animations-part2.html
 
-from tkinter import *
 
 def init(data):
     data.board = Board(BOARD_SIZE)
@@ -41,9 +44,13 @@ def init(data):
     data.placedRow = None
     data.placedCol = None
 
-    data.evaluator = NNEvaluatorFactory("trained_models/naive_mcts_model", BOARD_SIZE)
+    data.evaluator = NNEvaluatorFactory(
+        "trained_models/naive_mcts_model", BOARD_SIZE)
+    data.batch_evaluator = BatchNNEvaluatorFactory(
+        "trained_models/naive_mcts_model", BOARD_SIZE)
 
-    data.passButton = Button(data.root, text="Pass", relief=GROOVE, command=lambda: makePassMove(data))
+    data.passButton = Button(data.root, text="Pass",
+                             relief=GROOVE, command=lambda: makePassMove(data))
     data.passButtonWidth = 100
 
     data.modelEvaluateButton = Button(data.root, text="AI Evaluate", relief=GROOVE,
@@ -56,7 +63,8 @@ def init(data):
 
 
 def mousePressed(event, data):
-    if data.gameOver: return
+    if data.gameOver:
+        return
     if data.board.current_player not in data.userPlayers:
         return
     row = int((event.y - data.horizontalMargin) // data.cellHeight)
@@ -71,23 +79,29 @@ def mousePressed(event, data):
             data.evaluator_value, data.evaluator_policy = None, None
             data.gameOver = data.board.IsGameOver()
 
+
 def keyPressed(event, data):
     # use event.char and event.keysym
     pass
+
 
 def makePassMove(data):
     if not data.gameOver:
         data.board.MakeMove(-1, -1)
 
+
 def EvaluateBoard(data):
     data.evaluator_value, data.evaluator_policy, _ = data.evaluator(data.board)
+
 
 def timerFired(data):
     if data.gameOver or data.require_redraw:
         return
     if data.board.current_player not in data.userPlayers:
         # mcts_move = data.board.GetMCTSMove(THREADS, SECONDS_PER_MOVE)
-        mcts_move = MCTS(data.board, data.evaluator, SECONDS_PER_MOVE)
+        # mcts_move = MCTS(data.board, data.evaluator, SECONDS_PER_MOVE)
+        mcts_move = BatchedMCTS(
+            data.board, data.batch_evaluator, SECONDS_PER_MOVE)
         data.board.MakeMove(mcts_move.row, mcts_move.col)
         data.placedRow = mcts_move.row
         data.placedCol = mcts_move.col
@@ -110,9 +124,9 @@ def redrawAll(canvas, data):
             left = data.verticalMargin + data.cellWidth * col
             right = left + data.cellWidth
             if (row < data.boardLen - 1 and col < data.boardLen - 1):
-                canvas.create_rectangle(left + data.cellWidth / 2, 
-                    top + data.cellHeight / 2, right + data.cellWidth / 2, 
-                    bot + data.cellHeight / 2)
+                canvas.create_rectangle(left + data.cellWidth / 2,
+                                        top + data.cellHeight / 2, right + data.cellWidth / 2,
+                                        bot + data.cellHeight / 2)
             if board[row][col] != '-':
                 color = 'red'
                 if board[row][col] == 'B':
@@ -124,9 +138,9 @@ def redrawAll(canvas, data):
                 if row == data.placedRow and col == data.placedCol:
                     outline = 'red'
                     width = 4
-                canvas.create_oval(left + data.circleMargin, 
-                    top + data.circleMargin, right - data.circleMargin, 
-                    bot - data.circleMargin, fill=color, outline=outline, width=width)
+                canvas.create_oval(left + data.circleMargin,
+                                   top + data.circleMargin, right - data.circleMargin,
+                                   bot - data.circleMargin, fill=color, outline=outline, width=width)
 
             if data.evaluator_policy is not None:
                 prior = data.evaluator_policy[row][col]
@@ -134,31 +148,33 @@ def redrawAll(canvas, data):
                 radius = (data.cellWidth - 2 * data.circleMargin) * prior / 2
                 x_center = (left + right) / 2
                 y_center = (top + bot) / 2
-                canvas.create_oval(x_center - radius, 
-                    y_center - radius, x_center + radius, 
-                    y_center + radius, fill=color, width=0)
+                canvas.create_oval(x_center - radius,
+                                   y_center - radius, x_center + radius,
+                                   y_center + radius, fill=color, width=0)
 
         top = bot
         bot += data.cellHeight
 
     if (data.confidence is not None):
-        canvas.create_text(data.verticalMargin, data.horizontalMargin / 2, 
-                       text = "AI confidence: %.2f" % (data.confidence), anchor=W)
+        canvas.create_text(data.verticalMargin, data.horizontalMargin / 2,
+                           text="AI confidence: %.2f" % (data.confidence), anchor=W)
 
-    canvas.create_text(data.verticalMargin, data.height - (data.horizontalMargin) / 3, 
-                       text = "White score: %d" % data.board.GetPlayerScore(1), anchor=SW)
-    canvas.create_text(data.width / 2, data.height - (data.horizontalMargin) / 3, 
-                       text = "B score: %d" % data.board.GetPlayerScore(0), anchor=SW)
+    canvas.create_text(data.verticalMargin, data.height - (data.horizontalMargin) / 3,
+                       text="White score: %d" % data.board.GetPlayerScore(1), anchor=SW)
+    canvas.create_text(data.width / 2, data.height - (data.horizontalMargin) / 3,
+                       text="B score: %d" % data.board.GetPlayerScore(0), anchor=SW)
     canvas.create_window(data.width - data.verticalMargin, data.horizontalMargin / 5,
-                width = data.passButtonWidth, window = data.passButton, anchor=NE)
+                         width=data.passButtonWidth, window=data.passButton, anchor=NE)
     canvas.create_window(data.width - data.verticalMargin, 4 * data.horizontalMargin / 5,
-                width = data.evaluatorButtonWidth, window = data.modelEvaluateButton, anchor=NE)
+                         width=data.evaluatorButtonWidth, window=data.modelEvaluateButton, anchor=NE)
 
     if data.gameOver:
         message = "GAME OVER"
-        canvas.create_text(data.width / 2, data.horizontalMargin / 2, text=message)
+        canvas.create_text(
+            data.width / 2, data.horizontalMargin / 2, text=message)
     elif data.board.current_player in data.userPlayers:
-        canvas.create_text(data.width / 2, data.horizontalMargin / 3, text="Your Turn")
+        canvas.create_text(
+            data.width / 2, data.horizontalMargin / 3, text="Your Turn")
         if data.board.current_player == 0:
             color = 'black'
         else:
@@ -167,6 +183,7 @@ def redrawAll(canvas, data):
         cellRadius /= 2
         canvas.create_oval(data.width / 2 - cellRadius, data.horizontalMargin - cellRadius,
                            data.width / 2 + cellRadius, data.horizontalMargin + cellRadius, fill=color)
+
 
 def run(width=300, height=300):
     def redrawAllWrapper(canvas, data):
@@ -191,16 +208,18 @@ def run(width=300, height=300):
         # pause, then call timerFired again
         canvas.after(data.timerDelay, timerFiredWrapper, canvas, data)
     # Set up data and call init
-    class Struct(object): pass
+
+    class Struct(object):
+        pass
     data = Struct()
     data.width = width
     data.height = height
-    data.timerDelay = 100 # milliseconds
+    data.timerDelay = 100  # milliseconds
 
     # create the root and the canvas
     root = Tk()
     root.wm_title("Go")
-    root.resizable(width=False, height=False) # prevents resizing window
+    root.resizable(width=False, height=False)  # prevents resizing window
 
     data.root = root
     canvas = Canvas(root, width=data.width, height=data.height)
@@ -211,13 +230,14 @@ def run(width=300, height=300):
 
     # set up events
     root.bind("<Button-1>", lambda event:
-                            mousePressedWrapper(event, canvas, data))
+              mousePressedWrapper(event, canvas, data))
     root.bind("<Key>", lambda event:
-                            keyPressedWrapper(event, canvas, data))
+              keyPressedWrapper(event, canvas, data))
     timerFiredWrapper(canvas, data)
     # and launch the app
     root.mainloop()  # blocks until window is closed
     print("bye!")
+
 
 if __name__ == "__main__":
     run(1200, 1200)

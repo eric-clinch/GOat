@@ -107,7 +107,14 @@ def timerFired(data):
         data.placedCol = mcts_move.col
         data.confidence = mcts_move.confidence
 
-        data.evaluator_value, data.evaluator_policy = None, None
+        data.evaluator_policy = []
+        for i in range(data.boardLen):
+            row_start = i * data.boardLen
+            row_end = row_start + data.boardLen
+            row = mcts_move.policy.distribution[row_start: row_end]
+            data.evaluator_policy.append(row)
+
+        data.evaluator_value = None
         data.gameOver = data.board.IsGameOver()
         data.require_redraw = True
 

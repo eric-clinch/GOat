@@ -66,7 +66,8 @@ class BatchTreeNode(TreeNode):
                 child_visits = 0
                 child_batch_visits = 0
             else:
-                child_score = 1 - child.node.ExpectedValue()
+                child_score = (1 - child.node.ExpectedValue()
+                               if child.node.value_sum is not None else 0)
                 child_visits = child.node.visits
                 child_batch_visits = child.node.batch_visits
 
@@ -121,14 +122,16 @@ def BatchedMCTS(board, batch_evaluator, seconds_to_run):
     ProcessBatch(root_batch, batch_evaluator, len(board))
 
     count = 0
-    batch_size = 16
+    batch_size = 64
     while time.time() - start_time < seconds_to_run:
         batch_nodes = []
         for _ in range(batch_size):
             batch_nodes.append(root_node.MCTSIter(board.Copy()))
             count += 1
         ProcessBatch(batch_nodes, batch_evaluator, len(board))
-    move, confidence = root_node.SampleChild()
+
+    temp = .25
+    move, confidence = root_node.SampleChild(temp=temp)
 
     print("%d Batch MCTS iterations performed" % count)
 
@@ -141,6 +144,6 @@ def BatchedMCTS(board, batch_evaluator, seconds_to_run):
         result.row = move.row
         result.col = move.col
     result.confidence = confidence
-    result.policy = root_node.VisitPolicy(len(board))
+    result.policy = root_node.VisitPolicy(len(board), temp=temp)
 
     return result

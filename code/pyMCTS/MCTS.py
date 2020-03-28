@@ -43,29 +43,6 @@ class TreeNode():
         self.visits = 1
         self.value_sum = value
 
-    def VisitPolicy(self, board_size):
-        num_elems = board_size * board_size + 1
-        distribution = [0] * num_elems
-        visit_sum = 0
-        for child in self.children:
-            move = child.move
-            idx = board_size * move.row + move.col
-            if move.row < 0:
-                assert(move.col < 0)
-                # This is the pass move
-                idx = num_elems - 1
-            visits = child.node.visits if child.node is not None else 0
-            distribution[idx] = visits
-            visit_sum += visits
-
-        # Normalize the distribution
-        for i in range(num_elems):
-            distribution[i] = distribution[i] / visit_sum
-        policy = Struct()
-        policy.length = len(distribution)
-        policy.distribution = distribution
-        return policy
-
     def NormalizeChildrenPriors(self):
         prior_sum = 0
         for child in self.children:
@@ -104,7 +81,7 @@ class TreeNode():
                     child.node.PrintTree(depth + 1, max_depth)
 
     def ExpectedValue(self):
-        return self.value_sum / self.visits if self.value_sum is not None else 0
+        return self.value_sum / self.visits
 
     def UCB1(self):
         # If there are unvisited children, pick the child with the highest prior
@@ -163,6 +140,30 @@ class TreeNode():
                 most_visits = child.node.visits
                 best_child = child
         return best_child.move, 1 - best_child.node.ExpectedValue()
+
+    def VisitPolicy(self, board_size, temp=1):
+        num_elems = board_size * board_size + 1
+        distribution = [0] * num_elems
+        weight_sum = 0
+        for child in self.children:
+            move = child.move
+            idx = board_size * move.row + move.col
+            if move.row < 0:
+                assert(move.col < 0)
+                # This is the pass move
+                idx = num_elems - 1
+            weight = (child.node.visits ** (1 / temp)
+                      if child.node is not None else 0)
+            distribution[idx] = weight
+            weight_sum += weight
+
+        # Normalize the distribution
+        for i in range(num_elems):
+            distribution[i] = distribution[i] / weight_sum
+        policy = Struct()
+        policy.length = len(distribution)
+        policy.distribution = distribution
+        return policy
 
     # Samples a move. Each move is sampled with probability proportional to
     # v ** (1 / t), where v is the visit count of that move, and t is the

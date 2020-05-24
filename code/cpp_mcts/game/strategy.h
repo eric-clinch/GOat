@@ -1,8 +1,8 @@
 #ifndef STRATEGY_h
 #define STRATEGY_h
 
-#include "cpp_mcts/Board/Board.h"
-#include "cpp_mcts/Board/Move.h"
+#include "cpp_mcts/board/board.h"
+#include "cpp_mcts/board/move.h"
 
 class Strategy {
  public:

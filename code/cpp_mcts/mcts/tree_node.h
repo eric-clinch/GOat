@@ -5,11 +5,11 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-#include "cpp_mcts/Board/Board.h"
-#include "cpp_mcts/Board/Move.h"
-#include "MAB.h"
-#include "TreeNode.h"
-#include "UtilityNode.h"
+#include "cpp_mcts/board/board.h"
+#include "cpp_mcts/board/move.h"
+#include "mab.h"
+#include "tree_node.h"
+#include "utility_node.h"
 
 class TreeNode {
  public:

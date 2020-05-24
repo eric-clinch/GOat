@@ -10,3 +10,10 @@ py_binary(
     srcs = ["user_ui.py"],
     deps = ["//py_alphago/py_mcts:py_mcts"],
 )
+
+py_binary(
+    name = "play_games",
+    srcs = ["play_games.py"],
+    deps = ["//py_alphago/py_mcts:py_mcts"],
+)
+

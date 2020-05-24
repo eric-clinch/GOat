@@ -2,7 +2,7 @@ from play_games import GeneratePlayouts, PyMctsFactory, MoveDatapoint
 from train_network import Train, LoadObject
 import argparse
 from resnet.resnet import Resnet, DEVICE
-from py_mcts.NNEvaluator import NNEvaluatorFactory
+from py_mcts.nn_evaluator import NNEvaluatorFactory
 import pickle, os
 
 if __name__ == "__main__":

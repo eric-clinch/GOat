@@ -3,11 +3,11 @@
 
 #include <atomic>
 #include <random>
-#include "cpp_mcts/Board/Board.h"
-#include "cpp_mcts/Board/Move.h"
-#include "cpp_mcts/Game/Strategy.h"
-#include "MAB.h"
-#include "TreeNode.h"
+#include "cpp_mcts/board/board.h"
+#include "cpp_mcts/board/move.h"
+#include "cpp_mcts/game/strategy.h"
+#include "mab.h"
+#include "tree_node.h"
 
 struct workerArg;
 struct mainArg;

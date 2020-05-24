@@ -5,8 +5,8 @@
 #include <iostream>
 #include <random>
 #include <vector>
-#include "cpp_mcts/Board/Board.h"
-#include "Strategy.h"
+#include "cpp_mcts/board/board.h"
+#include "strategy.h"
 
 class Game {
  private:

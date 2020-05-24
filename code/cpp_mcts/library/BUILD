@@ -1,7 +1,7 @@
 
 cc_library(
-    name = "Tools",
-    hdrs = ["Tools.h"],
+    name = "tools",
+    hdrs = ["tools.h"],
     srcs = [],
     deps = [],
     visibility = ["//visibility:public",],

@@ -9,33 +9,33 @@ class BoardTest {
     Board board0 = test0();
     board0.seenZeroFill();
     bool answer = board0.capture(1, 1, 'B', 'W', 0);
-    assert(answer == false);
+    assert(!answer);
 
     Board board1 = test1();
     board1.seenZeroFill();
     answer = board1.capture(1, 1, 'B', 'W', 0);
-    assert(answer == true);
+    assert(answer);
     assert(1 == board1.removeStones(1, 1, 'B'));
 
     Board board2 = test2();
     board2.seenZeroFill();
     answer = board2.capture(1, 1, 'B', 'W', 0);
-    assert(answer == false);
+    assert(!answer);
 
     Board board3 = test3();
     board3.seenZeroFill();
     answer = board3.capture(1, 1, 'B', 'W', 0);
-    assert(answer == false);
+    assert(!answer);
 
     Board board4 = test4();
     board4.seenZeroFill();
     answer = board4.capture(2, 2, 'B', 'W', 0);
-    assert(answer == false);
+    assert(!answer);
 
     Board board5 = test5();
     board5.seenZeroFill();
     answer = board5.capture(0, 0, 'W', 'B', 0);
-    assert(answer == true);
+    assert(answer);
     assert(3 == board5.removeStones(0, 0, 'W'));
 
     Board board6 = test6();
@@ -43,9 +43,9 @@ class BoardTest {
 
     board6.seenZeroFill();
     answer = board6.capture(0, 0, 'W', 'B', 0);
-    assert(answer == false);
-    bool answer2 = board6.capture(1, 0, 'B', 'W', 0);
-    assert(answer2 == false);
+    assert(!answer);
+    answer = board6.capture(1, 0, 'B', 'W', 0);
+    assert(!answer);
     assert(4 == board6.removeStones(0, 0, 'W'));
 
     Board board7 = test7();

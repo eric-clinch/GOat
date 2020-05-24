@@ -9,7 +9,7 @@
 #include <iostream>
 #include <mutex>
 #include <vector>
-#include "Move.h"
+#include "move.h"
 
 using namespace std;
 

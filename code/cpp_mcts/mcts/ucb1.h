@@ -8,7 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "MAB.h"
+#include "mab.h"
 
 using namespace std;
 

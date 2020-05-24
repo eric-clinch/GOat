@@ -1,8 +1,8 @@
 
 import math
 import time
-from py_mcts.Board import MCTSMove, Policy, Board
-from py_mcts.MCTS import MoveInfo, Struct, TreeNode
+from py_mcts.board import MCTSMove, Policy, Board
+from py_mcts.mcts import MoveInfo, Struct, TreeNode
 import numpy as np
 
 

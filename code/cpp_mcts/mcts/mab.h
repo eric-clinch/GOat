@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "UtilityNode.h"
+#include "utility_node.h"
 
 template <class T>
 class MAB {

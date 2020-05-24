@@ -1,9 +1,9 @@
 #include <thread>
-#include "Board/Board.h"
-#include "Board/Move.h"
-#include "Game/Game.h"
-#include "Game/Strategy.h"
-#include "MCTS/MCTS.h"
+#include "board/board.h"
+#include "board/move.h"
+#include "game/game.h"
+#include "game/strategy.h"
+#include "mcts/mcts.h"
 
 typedef struct Location {
   int row;

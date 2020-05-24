@@ -1,11 +1,11 @@
-#include "Board.h"
+#include "board.h"
 #include <assert.h>
 #include <cstring>
 #include <sstream>
 #include <stack>
 #include <string>
 #include <unordered_set>
-#include "BoardTest.h"
+#include "board_test.h"
 
 const char Board::P0STONE = 'B';
 const char Board::P1STONE = 'W';

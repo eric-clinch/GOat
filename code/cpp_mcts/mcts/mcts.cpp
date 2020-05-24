@@ -1,10 +1,10 @@
-#include "MCTS.h"
 #include <assert.h>
 #include <pthread.h>
 #include <chrono>
 #include <iostream>
-#include "UCB1.h"
-#include "cpp_mcts/library/Tools.h"
+#include "ucb1.h"
+#include "mcts.h"
+#include "cpp_mcts/library/tools.h"
 
 std::random_device MCTS::rd;
 std::mt19937 MCTS::rng(rd());

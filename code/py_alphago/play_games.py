@@ -1,7 +1,7 @@
-from py_mcts.MCTS import MCTS
-from py_mcts.Board import Board
-from py_mcts.NaiveEvaluator import NaiveEvaluator
-from py_mcts.NNEvaluator import NNEvaluatorFactory
+from py_mcts.mcts import MCTS
+from py_mcts.board import Board
+from py_mcts.naive_evaluator import NaiveEvaluator
+from py_mcts.nn_evaluator import NNEvaluatorFactory
 
 import pickle
 import argparse

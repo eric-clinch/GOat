@@ -1,7 +1,7 @@
 
 import math
 import time
-from pyMCTS.Board import MCTSMove, Policy
+from py_mcts.Board import MCTSMove, Policy
 import numpy as np
 
 

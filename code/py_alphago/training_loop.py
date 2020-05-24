@@ -1,8 +1,8 @@
-from PlayGames import GeneratePlayouts, PyMctsFactory, MoveDatapoint
-from TrainNetwork import Train, LoadObject
+from play_games import GeneratePlayouts, PyMctsFactory, MoveDatapoint
+from train_network import Train, LoadObject
 import argparse
-from Resnet.resnet import Resnet, DEVICE
-from pyMCTS.NNEvaluator import NNEvaluatorFactory
+from resnet.resnet import Resnet, DEVICE
+from py_mcts.NNEvaluator import NNEvaluatorFactory
 import pickle, os
 
 if __name__ == "__main__":

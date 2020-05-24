@@ -4,7 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include "UCB1.h"
-#include "library/Tools.h"
+#include "cpp_mcts/library/Tools.h"
 
 std::random_device MCTS::rd;
 std::mt19937 MCTS::rng(rd());

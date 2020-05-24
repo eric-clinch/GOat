@@ -4,13 +4,13 @@ from tkinter import *
 import subprocess
 import time
 import sys
-from pyMCTS.Board import Board
-from pyMCTS.MCTS import MCTS
-from pyMCTS.BatchedMCTS import BatchedMCTS
-from pyMCTS.NaiveEvaluator import NaiveEvaluator
-from pyMCTS.NNEvaluator import NNEvaluatorFactory, BatchNNEvaluatorFactory
+from py_mcts.Board import Board
+from py_mcts.MCTS import MCTS
+from py_mcts.BatchedMCTS import BatchedMCTS
+from py_mcts.NaiveEvaluator import NaiveEvaluator
+from py_mcts.NNEvaluator import NNEvaluatorFactory, BatchNNEvaluatorFactory
 
-SECONDS_PER_MOVE = 10
+SECONDS_PER_MOVE = 5
 THREADS = -1  # Use all available threads
 BOARD_SIZE = 9
 
@@ -247,4 +247,4 @@ def run(width=300, height=300):
 
 
 if __name__ == "__main__":
-    run(1200, 1200)
+    run(800, 800)

@@ -3,9 +3,9 @@
 
 #include <atomic>
 #include <random>
-#include "Board/Board.h"
-#include "Board/Move.h"
-#include "Game/Strategy.h"
+#include "cpp_mcts/Board/Board.h"
+#include "cpp_mcts/Board/Move.h"
+#include "cpp_mcts/Game/Strategy.h"
 #include "MAB.h"
 #include "TreeNode.h"
 

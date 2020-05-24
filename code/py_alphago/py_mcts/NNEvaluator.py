@@ -1,5 +1,5 @@
 
-from Resnet.resnet import Resnet
+from resnet.resnet import Resnet
 import torch
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

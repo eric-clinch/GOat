@@ -5,7 +5,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
-#include "Board/Board.h"
+#include "cpp_mcts/Board/Board.h"
 #include "Strategy.h"
 
 class Game {

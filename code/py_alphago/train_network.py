@@ -1,27 +1,30 @@
-from Resnet.resnet import Resnet
+from resnet.resnet import Resnet
 import torch
 import torch.optim as optimizer
+from torch.utils.data import DataLoader
 import pickle
-from PlayGames import MoveDatapoint
+from play_games import MoveDatapoint
 
 import time, math, random
 import argparse
+from typing import *
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def LoadObject(file_name):
+# Returns an object that is pickled in the given file
+def LoadObject(file_name: str):
     file = open(file_name, 'rb')
     obj = pickle.load(file)
     file.close()
     return obj
 
-def GetPlayerStoneMap(board_list, player):
+def GetPlayerStoneMap(board_list: List[List[str]], player: int) -> List[List[int]]:
     player_str = 'B' if player == 0 else 'W'
     stone_mapper = lambda x: 1 if x == player_str else 0
     stone_map = [list(map(stone_mapper, row)) for row in board_list]
     return stone_map
 
-def GetDataset(playouts, batchsize):
+def GetDataset(playouts: List[List[MoveDatapoint]], batchsize: int) -> DataLoader:
     datapoints = []
     for playout in playouts:
         for move_datapoint in playout:
@@ -32,7 +35,7 @@ def GetDataset(playouts, batchsize):
             value = torch.Tensor([move_datapoint.confidence])
             policy = torch.Tensor(move_datapoint.policy)
             datapoints.append((network_input, value, policy))
-    return torch.utils.data.DataLoader(datapoints, batch_size=batchsize, shuffle=True)
+    return DataLoader(datapoints, batch_size=batchsize, shuffle=True)
 
 def AugmentData(states, policies):
     board_moves = policies[:, :-1]
@@ -56,11 +59,11 @@ def AugmentData(states, policies):
 
     return states, policies 
 
-def CrossEntropy(target, distribution):
+def CrossEntropy(target: torch.Tensor, distribution: torch.Tensor) -> torch.Tensor:
     losses = torch.einsum('ij,ij->i', target, torch.log(distribution))
     return -torch.mean(losses)
 
-def Epoch(nn, data_loader, value_criterion, policy_criterion, optim):
+def Epoch(nn: Resnet, data_loader: DataLoader, value_criterion, policy_criterion, optim: optimizer) -> float:
     running_loss = 0
     count = 0
     for batch in data_loader:
@@ -83,7 +86,7 @@ def Epoch(nn, data_loader, value_criterion, policy_criterion, optim):
 
     return running_loss / count 
 
-def Train(playouts, net, save_path, epochs=500):
+def Train(playouts: List[List[MoveDatapoint]], net: Resnet, save_path: str, epochs: int=500):
     batch_size = 1024
     data_loader = GetDataset(playouts, batch_size)
 

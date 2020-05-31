@@ -27,21 +27,30 @@ if __name__ == "__main__":
     with open(args.config_file) as config_file:
         contents = json.load(config_file)
 
-    if ('addr' not in contents) or ('port' not in contents):
+    if ('addr' not in contents) or ('port' not in contents) or ('rank' not in contents):
         print("IP address (addr) and port number required in config")
 
     address = contents['addr']
     port = contents['port']
+    rank = int(contents['rank'])
 
     print("Beginning to init group")
     connection = f"tcp://{address}:{port}"
-    print(f"Hosting at {connection}")
+    if rank == 0:
+        print(f"Hosting at {connection}")
+    else:
+        print(f"Connecting to {connection}")
     dist.init_process_group('gloo',
                             init_method=connection,
-                            rank=0,
+                            rank=rank,
                             world_size=2)
     print("Group init completed")
 
-    listen_proc = Process(target=PlayoutListen)
-    listen_proc.start()
-    listen_proc.join()
+    if rank == 0:
+        listen_proc = Process(target=PlayoutListen)
+        listen_proc.start()
+        listen_proc.join()
+    else:
+        tensor = torch.Tensor([1, 2, 3])
+        dist.send(tensor, dst=0)
+        print("Tensor sent to host")

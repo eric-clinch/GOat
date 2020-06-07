@@ -1,7 +1,9 @@
 import torch.nn as nn
 import torch
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cpu')
+
 
 class ConvBlock(nn.Module):
     def __init__(self, inChannels, outChannels):
@@ -65,12 +67,14 @@ class Resnet(nn.Module):
         self.res4 = self.makeResidualBlock(32)
         self.valueLayer = nn.Linear(
             board_size * board_size * self.inChannels, 1)
-        self.policyLayer = nn.Linear(board_size * board_size * self.inChannels, board_size * board_size + 1)
+        self.policyLayer = nn.Linear(
+            board_size * board_size * self.inChannels, board_size * board_size + 1)
         self.soft_max = nn.Softmax(dim=1)
         self.sigmoid = nn.Sigmoid()
 
     def Load(self, file_path):
-        self.load_state_dict(torch.load(file_path, map_location=torch.device(DEVICE)))
+        self.load_state_dict(torch.load(
+            file_path, map_location=torch.device(DEVICE)))
 
     def makeConvLayer(self, outChannels):
         result = ConvBlock(self.inChannels, outChannels)

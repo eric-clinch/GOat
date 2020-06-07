@@ -190,7 +190,7 @@ def MCTS(board, evaluator, seconds_to_run):
         count += 1
     move, confidence = root_node.SampleChild()
 
-    print("%d MCTS iterations performed" % count)
+    print(f"{count} MCTS iterations performed")
 
     result = Struct()
     if confidence < 0.05:

@@ -1,8 +1,9 @@
 
-from resnet.resnet import Resnet
-import torch
+from resnet.resnet import Resnet, DEVICE
+from typing import *
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+import torch
+import collections
 
 
 def GetPlayerStoneMap(board_list, player):
@@ -21,9 +22,16 @@ def BoardToTensor(board):
     return network_input
 
 
-def NNEvaluatorFactory(model_path, board_size):
+def NNEvaluatorFactory(model_params: Union[str, collections.OrderedDict], board_size: int):
     net = Resnet(2, board_size).to(DEVICE)
-    net.Load(model_path)
+    if isinstance(model_params, str):
+        # Load the params from a file
+        net.Load(model_params)
+    elif isinstance(model_params, collections.OrderedDict):
+        # Load the params from this state dict
+        net.load_state_dict(model_params)
+    else:
+        raise Exception("Invalid model parameter object")
     net.train(False)
 
     def evaluate(board):

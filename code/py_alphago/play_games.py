@@ -1,5 +1,6 @@
 import py_mcts
 from py_mcts.mcts import MCTS
+from py_mcts.batched_mcts import BatchedMCTS
 from py_mcts.board import Board
 from py_mcts.naive_evaluator import NaiveEvaluator
 from py_mcts.nn_evaluator import NNEvaluatorFactory
@@ -120,6 +121,12 @@ def PyMctsFactory(evaluator, seconds):
     return strategy
 
 
+def BatchedPyMctsFactory(evaluator, seconds):
+    def strategy(board):
+        return BatchedMCTS(board, evaluator, seconds)
+    return strategy
+
+
 def WriteObject(file_name: str, obj):
     file = open(file_name, 'wb')
     pickle.dump(obj, file)
@@ -160,7 +167,7 @@ def GeneratePlayouts(board_size: int, strategy, save_path: Optional[str],
             while not param_queue.empty():
                 state_dict = param_queue.get()
             evaluator = NNEvaluatorFactory(state_dict, board_size)
-            strategy = PyMctsFactory(evaluator, seconds_per_move)
+            strategy = BatchedPyMctsFactory(evaluator, seconds_per_move)
 
 
 if __name__ == "__main__":

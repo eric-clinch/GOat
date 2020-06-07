@@ -2,10 +2,12 @@
 #define GAME_h
 
 #include <assert.h>
+
 #include <iostream>
 #include <random>
 #include <vector>
-#include "cpp_mcts/board/board.h"
+
+#include "code/cpp_mcts/board/board.h"
 #include "strategy.h"
 
 class Game {

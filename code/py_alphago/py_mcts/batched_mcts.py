@@ -5,6 +5,11 @@ from py_mcts.board import MCTSMove, Policy, Board
 from py_mcts.mcts import MoveInfo, Struct, TreeNode
 import numpy as np
 
+# A batched version of MCTS. The node expansion and result backpropagation are
+# done in a lazy fashion that allows nodes to be evaluated in a batched manner
+# by the neural network. Increasing the batchsize trades off exploration
+# intelligence for the increased efficiency of batched computation.
+
 
 class BatchTreeNode(TreeNode):
     def __init__(self, board, parent):

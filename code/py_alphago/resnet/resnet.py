@@ -1,8 +1,8 @@
 import torch.nn as nn
 import torch
 
-# DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-DEVICE = torch.device('cpu')
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# DEVICE = torch.device('cpu')
 
 
 class ConvBlock(nn.Module):

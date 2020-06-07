@@ -5,8 +5,9 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-#include "cpp_mcts/board/board.h"
-#include "cpp_mcts/board/move.h"
+
+#include "code/cpp_mcts/board/board.h"
+#include "code/cpp_mcts/board/move.h"
 #include "mab.h"
 #include "tree_node.h"
 #include "utility_node.h"
@@ -40,7 +41,7 @@ class TreeNode {
 
   int getCount() {
     int s = 0;
-    for (const UtilityNode<Move> node : moveUtilities) {
+    for (const UtilityNode<Move> &node : moveUtilities) {
       s += node.numTrials;
     }
     return s;

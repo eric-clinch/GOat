@@ -6,7 +6,7 @@ LIB = None
 
 
 def LoadLib():
-    board_lib_path = "bazel-bin/cpp_mcts/libboard.so"
+    board_lib_path = "bazel-bin/code/cpp_mcts/libboard.so"
     global LIB
     LIB = ctypes.cdll.LoadLibrary(board_lib_path)
 

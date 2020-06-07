@@ -4,11 +4,11 @@ from tkinter import *
 import subprocess
 import time
 import sys
-from py_mcts.Board import Board
-from py_mcts.MCTS import MCTS
-from py_mcts.BatchedMCTS import BatchedMCTS
-from py_mcts.NaiveEvaluator import NaiveEvaluator
-from py_mcts.NNEvaluator import NNEvaluatorFactory, BatchNNEvaluatorFactory
+from py_mcts.board import Board
+from py_mcts.mcts import MCTS
+from py_mcts.batched_mcts import BatchedMCTS
+from py_mcts.naive_evaluator import NaiveEvaluator
+from py_mcts.nn_evaluator import NNEvaluatorFactory, BatchNNEvaluatorFactory
 
 SECONDS_PER_MOVE = 5
 THREADS = -1  # Use all available threads

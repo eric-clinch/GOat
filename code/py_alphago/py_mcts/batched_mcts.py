@@ -1,9 +1,11 @@
 
 import math
 import time
+import numpy as np
+
 from py_mcts.board import MCTSMove, Policy, Board
 from py_mcts.mcts import MoveInfo, Struct, TreeNode
-import numpy as np
+
 
 # A batched version of MCTS. The node expansion and result backpropagation are
 # done in a lazy fashion that allows nodes to be evaluated in a batched manner
@@ -127,7 +129,7 @@ def BatchedMCTS(board, batch_evaluator, seconds_to_run):
     ProcessBatch(root_batch, batch_evaluator, len(board))
 
     count = 0
-    batch_size = 64
+    batch_size = 128
     while time.time() - start_time < seconds_to_run:
         batch_nodes = []
         for _ in range(batch_size):
@@ -138,7 +140,7 @@ def BatchedMCTS(board, batch_evaluator, seconds_to_run):
     temp = .25
     move, confidence = root_node.SampleChild(temp=temp)
 
-    print("%d Batch MCTS iterations performed" % count)
+    # print("%d Batch MCTS iterations performed" % count)
 
     result = Struct()
     if confidence < 0.05:

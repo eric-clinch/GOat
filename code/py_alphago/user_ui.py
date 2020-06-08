@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
 from tkinter import *
+
 import subprocess
 import time
 import sys
+
 from py_mcts.board import Board
 from py_mcts.mcts import MCTS
 from py_mcts.batched_mcts import BatchedMCTS

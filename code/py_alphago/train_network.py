@@ -1,7 +1,5 @@
-from resnet.resnet import Resnet, DEVICE
 from torch.utils.data import DataLoader
 from torch.multiprocessing import Process, Queue, Lock, Value
-from play_games import MoveDatapoint, DELIM, Send, StripDelim
 from typing import *
 
 import torch
@@ -14,6 +12,11 @@ import argparse
 import io
 import socket
 import json
+
+from resnet.resnet import Resnet, DEVICE
+from play_games import MoveDatapoint
+
+import communication
 
 
 # taken from https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
@@ -45,26 +48,21 @@ class ReplayMemory():
 def ReceivePlayouts(worker: socket.socket, worker_id: int,
                     replay_memory: ReplayMemory, mem_lock: Lock):
     worker.setblocking(True)
-    msg = b''
     while True:
         try:
-            msg += worker.recv(8192)
+            msg = communication.Receive(worker)
         except Exception as err:
             print(f"Error with worker {worker_id}, ending connection")
             worker.close()
             return
 
-        if msg.endswith(DELIM):
-            msg = StripDelim(msg)
-            playout: List[MoveDatapoint] = pickle.loads(msg)
+        playout: List[MoveDatapoint] = pickle.loads(msg)
 
-            mem_lock.acquire()
-            for move_datapoint in playout:
-                replay_memory.push(move_datapoint)
-            mem_lock.release()
-            print(f"{len(playout)} new datapoints added from worker {worker_id}")
-
-            msg = b''
+        mem_lock.acquire()
+        for move_datapoint in playout:
+            replay_memory.push(move_datapoint)
+        mem_lock.release()
+        print(f"{len(playout)} new datapoints added from worker {worker_id}")
 
 
 # Listens for new workers to contact the training server. When a new worker
@@ -97,7 +95,7 @@ def HandleWorkers(server: socket.socket, replay_memory: ReplayMemory,
                 buffer = io.BytesIO()
                 torch.save(state_dict, buffer)
                 param_bytes = buffer.getvalue()
-                Send(worker, buffer.getvalue())
+                communication.Send(worker, buffer.getvalue())
 
             workers[worker_id] = worker
             num_workers += 1
@@ -118,7 +116,7 @@ def HandleWorkers(server: socket.socket, replay_memory: ReplayMemory,
             for worker_id in workers.keys():
                 worker: socket.socket = workers[worker_id]
                 try:
-                    Send(worker, param_bytes)
+                    communication.Send(worker, param_bytes)
                 except:
                     # Something went wrong with this connection, so remove
                     # this worker

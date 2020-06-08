@@ -1,3 +1,15 @@
+# Bazel
+bazel-bin/
+bazel-gtps/
+bazel-genfiles/
+bazel-out/
+bazel-testlogs/
+bazel-bin
+bazel-out
+bazel-genfiles
+bazel-GOat
+bazel-testlogs
+
 # Python
 __pycache__/
 *.pyc

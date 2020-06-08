@@ -1,9 +1,3 @@
-import py_mcts
-from py_mcts.mcts import MCTS
-from py_mcts.batched_mcts import BatchedMCTS
-from py_mcts.board import Board
-from py_mcts.naive_evaluator import NaiveEvaluator
-from py_mcts.nn_evaluator import NNEvaluatorFactory
 from torch.multiprocessing import Process, Queue
 from typing import *
 
@@ -15,6 +9,15 @@ import pickle
 import io
 import string
 import torch
+
+from py_mcts.mcts import MCTS
+from py_mcts.batched_mcts import BatchedMCTS
+from py_mcts.board import Board
+from py_mcts.naive_evaluator import NaiveEvaluator
+from py_mcts.nn_evaluator import NNEvaluatorFactory, BatchNNEvaluatorFactory
+
+import py_mcts
+import communication
 
 
 class MoveDatapoint():
@@ -32,51 +35,29 @@ class MoveDatapoint():
 # -----------------------------------------------------------
 
 
-# A byte delimiter that is very unlikely to occur naturally
-DELIM = string.printable.encode('UTF-8')
-
-
-# Sends the given message with the delimiter
-def Send(sckt: socket.socket, msg):
-    sckt.send(msg + DELIM)
-
-
-# Given a byte string that ends with the delimiter, returns the byte string
-# with the delimiter stripped from the end
-def StripDelim(msg):
-    assert(len(msg) >= len(DELIM))
-    return msg[:-len(DELIM)]
-
-
 # Given a training server socket, listens on that socket for updates to the
 # network and places them in the param queue.
 def ReceiveParams(server: socket.socket, param_queue: Queue):
     server.setblocking(True)
     print("Listening for network updates...")
-    msg = b''
     while True:
         try:
-            msg += server.recv(8192)
+            msg = communication.Receive(server)
         except Exception as err:
             print(f"Error with server connection, ending connection")
             server.close()
             return
 
-        if msg.endswith(DELIM):
-            msg = StripDelim(msg)
+        buffer = io.BytesIO(msg)
+        state_dict = torch.load(buffer)
 
-            buffer = io.BytesIO(msg)
-            state_dict = torch.load(buffer)
-
-            param_queue.put(state_dict)
-
-            msg = b''
+        param_queue.put(state_dict)
 
 
 def SendPlayout(training_server: socket.socket, playout: List[MoveDatapoint]):
     msg = pickle.dumps(playout)
-    Send(training_server, msg)
-    print(f"Sent playout, message size {len(msg)}")
+    communication.Send(training_server, msg)
+    print(f"Sent playout with {len(playout)} moves")
 
 
 # -----------------------------------------------------------
@@ -86,7 +67,7 @@ def SendPlayout(training_server: socket.socket, playout: List[MoveDatapoint]):
 
 def GeneratePlayout(board_size: int, strategy0, strategy1) -> List[MoveDatapoint]:
     board = Board(board_size)
-    winner = 0
+    winner = None
     move_datapoints = []
     while not board.IsGameOver() and len(move_datapoints) < (board_size * board_size):
         strategy = strategy0 if board.current_player == 0 else strategy1
@@ -103,7 +84,7 @@ def GeneratePlayout(board_size: int, strategy0, strategy1) -> List[MoveDatapoint
 
         board.MakeMove(move_row, move_col)
 
-    if board.IsGameOver():
+    if winner is not None:
         winner = board.GetWinner()
 
     return move_datapoints
@@ -149,6 +130,7 @@ def GeneratePlayouts(board_size: int, strategy, save_path: Optional[str],
                      playouts: List[MoveDatapoint],
                      training_server: Optional[socket.socket],
                      param_queue: Optional[Queue]):
+    print("Beginning game playouts")
     game_count = 0
     while True:
         playout = GeneratePlayout(board_size, strategy, strategy)
@@ -185,7 +167,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     board_size = 9
-    seconds_per_move = 5
+    seconds_per_move = 1
     training_server = None
     param_queue = None
 
@@ -199,8 +181,7 @@ if __name__ == "__main__":
         address = config['addr']
         port = int(config['port'])
 
-        training_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        training_server.connect((address, port))
+        training_server = communication.WorkerSocket(address, port)
         param_queue = Queue()
 
         receiver_proc = Process(target=ReceiveParams,
@@ -210,11 +191,11 @@ if __name__ == "__main__":
 
         # Wait for the training server to send us the initial model parameters
         state_dict = param_queue.get()
-        evaluator = NNEvaluatorFactory(state_dict, board_size)
-        strategy = PyMctsFactory(evaluator, seconds_per_move)
+        evaluator = BatchNNEvaluatorFactory(state_dict, board_size)
+        strategy = BatchedPyMctsFactory(evaluator, seconds_per_move)
     elif args.model is not None:
-        evaluator = NNEvaluatorFactory(args.model, board_size)
-        strategy = PyMctsFactory(evaluator, seconds_per_move)
+        evaluator = BatchNNEvaluatorFactory(args.model, board_size)
+        strategy = BatchedPyMctsFactory(evaluator, seconds_per_move)
     else:
         strategy = CppMctsFactory(-1, seconds_per_move)
 

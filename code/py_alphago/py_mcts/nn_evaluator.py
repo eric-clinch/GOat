@@ -1,9 +1,11 @@
 
-from resnet.resnet import Resnet, DEVICE
 from typing import *
 
 import torch
 import collections
+
+from resnet.resnet import Resnet, DEVICE
+from py_mcts.board import Board
 
 
 def GetPlayerStoneMap(board_list, player):
@@ -13,7 +15,7 @@ def GetPlayerStoneMap(board_list, player):
     return stone_map
 
 
-def BoardToTensor(board):
+def BoardToTensor(board: Board):
     board_list = board.BoardList()
     player = board.current_player
     player_stone_map = GetPlayerStoneMap(board_list, player)
@@ -34,7 +36,8 @@ def NNEvaluatorFactory(model_params: Union[str, collections.OrderedDict], board_
         raise Exception("Invalid model parameter object")
     net.train(False)
 
-    def evaluate(board):
+    def evaluate(board: Board):
+        assert(isinstance(board, Board))
         net_input = BoardToTensor(board).unsqueeze(0).to(DEVICE)
         value, policy = net(net_input)
         value = value[0][0].item()
@@ -48,9 +51,16 @@ def NNEvaluatorFactory(model_params: Union[str, collections.OrderedDict], board_
     return evaluate
 
 
-def BatchNNEvaluatorFactory(model_path, board_size):
+def BatchNNEvaluatorFactory(model_params, board_size):
     net = Resnet(2, board_size).to(DEVICE)
-    net.Load(model_path)
+    if isinstance(model_params, str):
+        # Load the params from a file
+        net.Load(model_params)
+    elif isinstance(model_params, collections.OrderedDict):
+        # Load the params from this state dict
+        net.load_state_dict(model_params)
+    else:
+        raise Exception("Invalid model parameter object")
     net.train(False)
 
     def evaluate(board_batch):

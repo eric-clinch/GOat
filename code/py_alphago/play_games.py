@@ -167,7 +167,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     board_size = 9
-    seconds_per_move = 1
+    seconds_per_move = 5
     training_server = None
     param_queue = None
 

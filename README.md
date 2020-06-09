@@ -41,16 +41,16 @@ A worker node can be started with
 The worker script also has options for writing the game data collected to a file (serialized using the pickle module), in place of or in addition to sending the data to the training server. The training server has options for using such a pickled data file to initially fill the replay memory, and also has an option for using a previously trained model as the starting point for the training. The scripts have ```--help``` flags for more information on these options. Some previously trained models and generated game data are available in the ```trained_models``` and ```data``` directories, respectively.
 
 ### How to play
-A UI, written in tkinter, is available for playing against a trained model. To build this UI, run
+A UI, written in tkinter, is available for playing Go. This can be used to play against the trained agent, watching the agent play against itself, or just allowing the two users to play Go together. To build this UI, run
 ```
-bazel build code/py_alphago/user_ui
+bazel build code/py_alphago/ui
 ```
 
 To use the UI, run
 ```
-./bazel-bin/code/py_alphago/user_ui
+./bazel-bin/code/py_alphago/ui
 ```
-Currently the UI is hard-coded to use the model at ```trained_models/naive_mcts_mode```. In the future, options will be added to allow the user to select what model to play against, and to let the user just watch the AI play against itself.
+Use the ```--help``` flag to see the various options for running the UI.
 
 ### Code architecture
 This is meant to give an overview of the code structure for anyone that wants to read and or modify the code. All code is naturally located in the ```code``` directory. Inside there are two directories, ```cpp_mcts``` and ```py_alphago```.

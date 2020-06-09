@@ -5,14 +5,15 @@ from tkinter import *
 import subprocess
 import time
 import sys
+import argparse
 
 from py_mcts.board import Board
 from py_mcts.mcts import MCTS
 from py_mcts.batched_mcts import BatchedMCTS
 from py_mcts.naive_evaluator import NaiveEvaluator
 from py_mcts.nn_evaluator import NNEvaluatorFactory, BatchNNEvaluatorFactory
+from play_games import CppMctsFactory, PyMctsFactory, BatchedPyMctsFactory
 
-SECONDS_PER_MOVE = 5
 THREADS = -1  # Use all available threads
 BOARD_SIZE = 9
 
@@ -26,12 +27,18 @@ def rgbString(red, green, blue):
 # https://www.cs.cmu.edu/~112/notes/notes-animations-part2.html
 
 
-def init(data):
+def init(data, args):
     data.board = Board(BOARD_SIZE)
     data.boardLen = BOARD_SIZE
     data.gameOver = False
     data.userWon = False
+
     data.userPlayers = []
+    if args.black_user:
+        data.userPlayers.append(0)
+    if args.white_user:
+        data.userPlayers.append(1)
+
     data.confidence = None
 
     data.backgroundColor = rgbString(219, 190, 122)
@@ -46,10 +53,17 @@ def init(data):
     data.placedRow = None
     data.placedCol = None
 
-    data.evaluator = NNEvaluatorFactory(
-        "trained_models/naive_mcts_model", BOARD_SIZE)
-    data.batch_evaluator = BatchNNEvaluatorFactory(
-        "trained_models/naive_mcts_model", BOARD_SIZE)
+    if args.model_file:
+        data.evaluator = NNEvaluatorFactory(
+            args.model_file, BOARD_SIZE)
+        data.batch_evaluator = BatchNNEvaluatorFactory(
+            args.model_file, BOARD_SIZE)
+        data.ai_strategy = BatchedPyMctsFactory(
+            data.batch_evaluator, args.move_time)
+    else:
+        data.evaluator = None
+        data.batch_evaluator = None
+        data.ai_strategy = CppMctsFactory(THREADS, args.move_time)
 
     data.passButton = Button(data.root, text="Pass",
                              relief=GROOVE, command=lambda: makePassMove(data))
@@ -102,8 +116,9 @@ def timerFired(data):
     if data.board.current_player not in data.userPlayers:
         # mcts_move = data.board.GetMCTSMove(THREADS, SECONDS_PER_MOVE)
         # mcts_move = MCTS(data.board, data.evaluator, SECONDS_PER_MOVE)
-        mcts_move = BatchedMCTS(
-            data.board, data.batch_evaluator, SECONDS_PER_MOVE)
+        # mcts_move = BatchedMCTS(
+        #     data.board, data.batch_evaluator, SECONDS_PER_MOVE)
+        mcts_move = data.ai_strategy(data.board)
         data.board.MakeMove(mcts_move.row, mcts_move.col)
         data.placedRow = mcts_move.row
         data.placedCol = mcts_move.col
@@ -194,7 +209,7 @@ def redrawAll(canvas, data):
                            data.width / 2 + cellRadius, data.horizontalMargin + cellRadius, fill=color)
 
 
-def run(width=300, height=300):
+def run(args, width=300, height=300):
     def redrawAllWrapper(canvas, data):
         canvas.delete(ALL)
         canvas.create_rectangle(0, 0, data.width, data.height,
@@ -227,7 +242,7 @@ def run(width=300, height=300):
 
     # create the root and the canvas
     root = Tk()
-    root.wm_title("Go")
+    root.wm_title("GOat")
     root.resizable(width=False, height=False)  # prevents resizing window
 
     data.root = root
@@ -235,7 +250,7 @@ def run(width=300, height=300):
     canvas.configure(bd=0, highlightthickness=0)
     canvas.pack()
 
-    init(data)
+    init(data, args)
 
     # set up events
     root.bind("<Button-1>", lambda event:
@@ -249,4 +264,17 @@ def run(width=300, height=300):
 
 
 if __name__ == "__main__":
-    run(800, 800)
+    parser = argparse.ArgumentParser(
+        description="A UI for playing against the trained AlphaGo agent")
+
+    parser.add_argument('--model_file', type=str, default=None,
+                        help=f"The model file for the agent. If not provided, the naive MCTS algorithm will be used for the AI.")
+    parser.add_argument('--move_time', type=int, default=5,
+                        help="The amount of time, in seconds, the AI will use for its move.")
+    parser.add_argument('--black_user', default=False, action='store_true',
+                        help="The black stones will be played by the user.")
+    parser.add_argument('--white_user', default=False, action='store_true',
+                        help="The white stones will be played by the user.")
+    args = parser.parse_args()
+
+    run(args, 800, 800)

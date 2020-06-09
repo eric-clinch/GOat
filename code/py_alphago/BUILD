@@ -6,8 +6,8 @@ py_binary(
 )
 
 py_binary(
-    name = "user_ui",
-    srcs = ["user_ui.py"],
+    name = "ui",
+    srcs = ["ui.py"],
     deps = ["//code/py_alphago/py_mcts:py_mcts"],
 )
 

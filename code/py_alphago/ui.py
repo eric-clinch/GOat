@@ -20,7 +20,7 @@ BOARD_SIZE = 9
 # taken from http://www.cs.cmu.edu/~112/notes/notes-graphics.html
 
 
-def rgbString(red, green, blue):
+def rgbString(red: int, green: int, blue: int) -> str:
     return "#%02x%02x%02x" % (red, green, blue)
 
 # animation framework taken from the 15-112 course website

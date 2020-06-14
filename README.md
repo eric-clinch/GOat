@@ -41,7 +41,7 @@ A worker node can be started with
 The worker script also has options for writing the game data collected to a file (serialized using the pickle module), in place of or in addition to sending the data to the training server. The training server has options for using such a pickled data file to initially fill the replay memory, and also has an option for using a previously trained model as the starting point for the training. The scripts have ```--help``` flags for more information on these options. Some previously trained models and generated game data are available in the ```trained_models``` and ```data``` directories, respectively.
 
 ### How to play
-A UI, written in tkinter, is available for playing Go. This can be used to play against the trained agent, watching the agent play against itself, or just allowing the two users to play Go together. To build this UI, run
+A UI, written in tkinter, is available for playing Go. This can be used to play against the trained agent, watching the agent play against itself, or just allowing two users to play Go together. To build this UI, run
 ```
 bazel build code/py_alphago/ui
 ```

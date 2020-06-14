@@ -3,6 +3,8 @@ import math
 import time
 import numpy as np
 
+from typing import *
+
 from py_mcts.board import MCTSMove, Policy, Board
 from py_mcts.mcts import MoveInfo, Struct, TreeNode
 
@@ -14,7 +16,7 @@ from py_mcts.mcts import MoveInfo, Struct, TreeNode
 
 
 class BatchTreeNode(TreeNode):
-    def __init__(self, board, parent):
+    def __init__(self, board: Board, parent):
         self.board = board
         self.parent = parent
 

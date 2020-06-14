@@ -1,12 +1,16 @@
 
+from typing import *
+
 import math
 import time
-from py_mcts.board import MCTSMove, Policy
 import numpy as np
+
+from py_mcts.board import MCTSMove, Policy, Location, Board
 
 
 class MoveInfo():
-    def __init__(self, move, board_prior, pass_prior):
+    def __init__(self, move: Location, board_prior: List[List[float]],
+                 pass_prior: float):
         self.move = move
         self.node = None
         if move.row < 0:
@@ -19,9 +23,16 @@ class MoveInfo():
 class Struct():
     pass
 
+# The evaluator used here is expected to be a function that takes a Board as
+# input and returns a Tuple[float, List[List[float]], float], where the first
+# tuple element is a float is an approximation of the game value, the second
+# element is a heuristic prior over what move is best, and the final element
+# is a float weight for the pass move. The heuristic prior and the pass move
+# weight are used together to create a probability distribution over the
+# possible moves for the agent to make to guide MCTS.
 
 class TreeNode():
-    def __init__(self, board, evaluator):
+    def __init__(self, board: Board, evaluator):
         if board.IsGameOver():
             self.winner = board.GetWinner()
             value = 1 if self.winner == board.current_player else 0
@@ -50,7 +61,7 @@ class TreeNode():
         for child in self.children:
             child.prior /= prior_sum
 
-    def MCTSIter(self, board, evaluator):
+    def MCTSIter(self, board: Board, evaluator) -> float:
         if self.winner is not None:
             value = 1 if self.winner == board.current_player else 0
         else:
@@ -68,7 +79,7 @@ class TreeNode():
         self.value_sum += value
         return value
 
-    def PrintTree(self, depth, max_depth):
+    def PrintTree(self, depth: int, max_depth: int):
         if depth == max_depth:
             return
         print('\t' * depth, self.visits, self.ExpectedValue())
@@ -80,10 +91,11 @@ class TreeNode():
                 if child.node is not None:
                     child.node.PrintTree(depth + 1, max_depth)
 
-    def ExpectedValue(self):
+    def ExpectedValue(self) -> float:
         return self.value_sum / self.visits
 
-    def UCB1(self):
+    # Returns the index of the move chosen by the UCB1 algorithm
+    def UCB1(self) -> int:
         # If there are unvisited children, pick the child with the highest prior
         best_prior = None
         best_index = None
@@ -110,7 +122,8 @@ class TreeNode():
                 best_index = i
         return best_index
 
-    def PUCT(self):
+    # Returns the index of the move chosen by the UCB1 algorithm
+    def PUCT(self) -> int:
         best_score = None
         best_index = None
         for i in range(len(self.children)):
@@ -132,7 +145,7 @@ class TreeNode():
 
     # Returns the move and the expected value associated with the most visited
     # child
-    def BestChild(self):
+    def BestChild(self) -> Tuple[Location, float]:
         most_visits = 0
         best_child = None
         for child in self.children:
@@ -141,7 +154,7 @@ class TreeNode():
                 best_child = child
         return best_child.move, 1 - best_child.node.ExpectedValue()
 
-    def VisitPolicy(self, board_size, temp=1):
+    def VisitPolicy(self, board_size, temp=1) -> Policy:
         num_elems = board_size * board_size + 1
         distribution = [0] * num_elems
         weight_sum = 0
@@ -160,6 +173,11 @@ class TreeNode():
         # Normalize the distribution
         for i in range(num_elems):
             distribution[i] = distribution[i] / weight_sum
+
+        # Because the Policy class inherits from ctypes.Structure, you can't
+        # initiate it with Python values. Instead we'll just create a struct
+        # and populate its attributes so that it matches the Policy class
+        # interface.
         policy = Struct()
         policy.length = len(distribution)
         policy.distribution = distribution
@@ -168,7 +186,7 @@ class TreeNode():
     # Samples a move. Each move is sampled with probability proportional to
     # v ** (1 / t), where v is the visit count of that move, and t is the
     # temperature.
-    def SampleChild(self, temp=1):
+    def SampleChild(self, temp=1) -> Tuple[Location, float]:
         child_weights = []
         for child in self.children:
             if child.node is None:
@@ -181,7 +199,7 @@ class TreeNode():
         return sample_child.move, 1 - sample_child.node.ExpectedValue()
 
 
-def MCTS(board, evaluator, seconds_to_run):
+def MCTS(board: Board, evaluator, seconds_to_run: float) -> MCTSMove:
     start_time = time.time()
     root_node = TreeNode(board, evaluator)
     count = 0
@@ -192,6 +210,10 @@ def MCTS(board, evaluator, seconds_to_run):
 
     print(f"{count} MCTS iterations performed")
 
+    # Because the MCTSMove class inherits from ctypes.Structure, you can't
+    # initiate it with Python values. Instead we'll just create a struct
+    # and populate its attributes so that it matches the MCTSMove class
+    # interface.
     result = Struct()
     if confidence < 0.05:
         # pass
